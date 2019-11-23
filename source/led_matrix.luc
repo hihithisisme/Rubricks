@@ -1,26 +1,26 @@
 module led_matrix #(
-        ROWS = 3 : ROWS > 0,
-        COLUMNS = 8 : COLUMNS > 0
+        COLS = 3 : COLS > 0,
+        ROWS = 8 : ROWS > 0
     )(
         input clk,  // clock
         input rst,
-        input matrix[ROWS][COLUMNS],
+        input matrix[COLS][ROWS],
         input color1[24],
         input color2[24],
-        output led_data[ROWS]
+        output led_data[COLS]
     ) {
       
     var i;
     sig color[24];
   
     .clk(clk) {
-        led_ws2812b led[ROWS](#SIZE(COLUMNS));
-        dff out_matrix[ROWS][8 * 24](.rst(rst));
+        led_ws2812b led[COLS](#SIZE(ROWS));
+        dff out_matrix[COLS][8 * 24](.rst(rst));
     }
     
     always {
         color = color1;
-        for (i = 0; i < ROWS; i++) {
+        for (i = 0; i < COLS; i++) {
             if (i>=1) {
               color = color2;
             }

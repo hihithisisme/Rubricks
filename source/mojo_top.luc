@@ -17,16 +17,19 @@ module mojo_top (
         output avr_rx,              // AVR RX (FPGA TX)
         output led_data[3],
         input user_button[1],
-        input io_button [5]    // 5 buttons on IO Shield
-
+        output io_led [3][8],   // LEDs on IO Shield
+        output io_seg [8],      // 7-segment LEDs on IO Shield
+        output io_sel [4],      // Digit select on IO Shield
+        input io_button [5],    // 5 buttons on IO Shield
+        input io_dip [3][8]     // DIP switches on IO Shield
     ) {
   
     sig rst;    // reset signal
     sig button;
     // led_matrix and init_blk are hardcoded, 
     // need to change if these constants change
-    const COLUMNS = 8;
-    const ROWS = 3;
+    const ROWS = 8;
+    const COLS = 3;
     rom_screen_idle rom_screen_idle;
 
 
@@ -34,21 +37,32 @@ module mojo_top (
         reset_conditioner reset_cond;
         button_conditioner button_cond;
         .rst(rst){
-        counter caseCount (#SIZE(8), #DIV(20));
+        counter caseCount (#SIZE(8), #DIV(25));
         }
-        
         dff reset;
         dff start;
         dff timer[28];
         dff color1[24];
         dff color2[24];
-        dff led_matrix_temp[ROWS][COLUMNS];
+        dff led_matrix_temp[COLS][ROWS];
         .rst(rst) {
-            led_matrix led_matrix(#COLUMNS(COLUMNS), #ROWS(ROWS)); 
+            led_matrix led_matrix(#ROWS(ROWS), #COLS(COLS)); 
+            reg_file myReg;
         }
     }
-    
+  sig control_ra;
+  sig control_rb;
+  sig control_wa;
+  sig wdsel;
+  alu myALU;
+
     always {
+        control_ra = 01;
+        control_rb = 11;
+        control_wa = 01;
+        wdsel = 1;
+    
+    
         reset_cond.in = reset.q;
         rst = reset_cond.out;
         
@@ -59,12 +73,38 @@ module mojo_top (
         spi_miso = bz;              // not using SPI
         spi_channel = bzzzz;        // not using flags
         avr_rx = bz;                // not using serial port
+        io_led = 3x{{8h00}};    // turn LEDs off
+        io_seg = 8hff;          // turn segments off
+        io_sel = 4hf;           // select no digits
+
         
         //first we attach nodes
         led_matrix.color1 = color1.q;
         led_matrix.color2 = color2.q;
         led_matrix.matrix = led_matrix_temp.q;
         led_data = led_matrix.led_data;
+    
+    
+        // all the testing
+        myReg.wdsel = caseCount.value[3];
+        myReg.ra_address = control_ra;
+        myReg.rb_address = control_rb;
+        
+        myALU.a = myReg.ra_data;
+        if(myReg.test1 == 8b11){
+          myALU.b = 0;
+          myReg.wa = 00;
+        } else{
+          myALU.b = 1;
+          myReg.wa = control_wa;
+        }
+        myALU.alufn = 000000;
+        myReg.wd = myALU.out;
+    
+        io_led[0] = myReg.test0;
+        io_led[1] = myReg.test1;
+        io_led[2] = caseCount.value;
+    
         
         led_matrix_temp.d[0] = caseCount.value;
         led_matrix_temp.d[1] = caseCount.value;
@@ -77,6 +117,8 @@ module mojo_top (
           color1.d = Color.GREEN;
           color2.d = Color.YELLOW;
         }
+    
+         
         
         //to change, assign color.d to whatever color we want
         //for reference, take a look at rom_screen_idle
