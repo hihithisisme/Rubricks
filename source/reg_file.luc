@@ -3,7 +3,7 @@ module reg_file #(
     COLS = 3
   )(
     input clk,  // clock
-    input rst,  // reset    
+    //input rst,  // reset    
     input ra_address[2],
     input rb_address[2],
     input wa[2],    // address to write to
@@ -18,7 +18,7 @@ module reg_file #(
   ) {
   
   .clk(clk){
-    dff regs[COLS][5][8](.rst(rst)); // 5 registers for each column: (0) rng com given (1) user input (2) SHL of user input 
+    dff regs[COLS][5][8]; // 5 registers for each column: (0) rng com given (1) user input (2) SHL of user input 
   }
   
   // PYTHON CODE FOR HARDCODING REGISTERS

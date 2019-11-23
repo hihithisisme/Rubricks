@@ -47,7 +47,6 @@ module mojo_top (
         dff led_matrix_temp[COLS][ROWS];
         .rst(rst) {
             led_matrix led_matrix(#ROWS(ROWS), #COLS(COLS)); 
-            reg_file myReg;
         }
     }
   sig control_ra;
@@ -55,8 +54,10 @@ module mojo_top (
   sig control_wa;
   sig wdsel;
   alu myALU;
+  reg_file myReg;
 
     always {
+        myReg.clk = caseCount.value[0];  // connect reg_file clk to a slower clock to observe changes
         control_ra = 01;
         control_rb = 11;
         control_wa = 01;
@@ -86,7 +87,7 @@ module mojo_top (
     
     
         // all the testing
-        myReg.wdsel = caseCount.value[3];
+        myReg.wdsel = io_button[0];
         myReg.ra_address = control_ra;
         myReg.rb_address = control_rb;
         
