@@ -1,0 +1,9 @@
+module rom_screen_idle (
+    output out[1][4]
+  ) {
+
+
+  always {
+    out[0] = b0101;
+  }
+}

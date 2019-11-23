@@ -1,0 +1,4 @@
+NET "led_data<0>"  LOC = P32 | IOSTANDARD = LVTTL;
+NET "led_data<1>"  LOC = P34 | IOSTANDARD = LVTTL;
+NET "led_data<2>"  LOC = P40 | IOSTANDARD = LVTTL;
+NET "user_button<0>" LOC = P118 | IOSTANDARD = LVTTL;

@@ -1,0 +1,35 @@
+module alu_shift (
+    input a[16], // input a
+    input b[4], //input b
+    input alufnIn[3],
+    output out[16]
+  ) {
+//  sig sign;
+  sig temp1[16];
+  sig temp2[16]; //to decimal
+  always {
+    if (alufnIn == 3b000){ //shift left
+      out = a<<b;
+    }
+    else if(alufnIn == 3b001){ //shift right
+      out = a>>b;
+    }
+    else if(alufnIn == 3b011){ //shift right A
+      out = $signed(a)>>>b; 
+    }
+    else if(alufnIn == 3b100){ //rotate right
+    temp1 = a>>b;
+    temp2 = a<<(16-b);
+    out = temp1 + temp2;
+    }
+    else if(alufnIn == 3b101){ //rotate left
+    temp1 = a<<b;
+    temp2 = a>>(16-b);
+    out = temp1 + temp2;
+    }
+   
+    else{
+      out =0;
+    }
+  }
+}

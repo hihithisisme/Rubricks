@@ -1,0 +1,9 @@
+module hardcode_screen (
+    input counter,  // reset
+    output out
+  ) {
+
+  always {
+    out = 0;
+  }
+}

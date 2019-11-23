@@ -1,0 +1,89 @@
+global Color {
+    // BGR
+    const RED = h00DD00;
+    const GREEN = h0000DD;
+    const BLUE = hDD0000;
+    const YELLOW = h008888;
+    const WHITE = h888888;
+    const BLACK = h000000;
+}
+
+module mojo_top (
+        input clk,                  // 50MHz clock
+        // input rst_n,
+        output led [8],             // 8 user controllable LEDs
+        output spi_miso,            // AVR SPI MISO
+        output spi_channel [4],     // AVR general purpose pins (used by default to select ADC channel)
+        output avr_rx,              // AVR RX (FPGA TX)
+        output led_data[3],
+        input user_button[1],
+        input io_button [5]    // 5 buttons on IO Shield
+
+    ) {
+  
+    sig rst;    // reset signal
+    sig button;
+    // led_matrix and init_blk are hardcoded, 
+    // need to change if these constants change
+    const COLUMNS = 8;
+    const ROWS = 3;
+    rom_screen_idle rom_screen_idle;
+
+
+    .clk(clk) {
+        reset_conditioner reset_cond;
+        button_conditioner button_cond;
+        .rst(rst){
+        counter caseCount (#SIZE(8), #DIV(20));
+        }
+        
+        dff reset;
+        dff start;
+        dff timer[28];
+        dff color1[24];
+        dff color2[24];
+        dff led_matrix_temp[ROWS][COLUMNS];
+        .rst(rst) {
+            led_matrix led_matrix(#COLUMNS(COLUMNS), #ROWS(ROWS)); 
+        }
+    }
+    
+    always {
+        reset_cond.in = reset.q;
+        rst = reset_cond.out;
+        
+        button_cond.in = io_button;
+        button = button_cond.out;
+    
+        led = 8h00;                 // turn LEDs off
+        spi_miso = bz;              // not using SPI
+        spi_channel = bzzzz;        // not using flags
+        avr_rx = bz;                // not using serial port
+        
+        //first we attach nodes
+        led_matrix.color1 = color1.q;
+        led_matrix.color2 = color2.q;
+        led_matrix.matrix = led_matrix_temp.q;
+        led_data = led_matrix.led_data;
+        
+        led_matrix_temp.d[0] = caseCount.value;
+        led_matrix_temp.d[1] = caseCount.value;
+        led_matrix_temp.d[2] = caseCount.value;
+        
+        color1.d = Color.RED;
+        color2.d = Color.BLUE;
+    
+        if(user_button[0]==1){
+          color1.d = Color.GREEN;
+          color2.d = Color.YELLOW;
+        }
+        
+        //to change, assign color.d to whatever color we want
+        //for reference, take a look at rom_screen_idle
+    
+        if(io_button[0]==1){
+          color1.d = Color.YELLOW;
+          color2.d = Color.GREEN;
+        }
+    }
+}

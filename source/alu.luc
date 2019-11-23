@@ -1,0 +1,43 @@
+module alu (
+    input alufn[6],
+    input a[16],
+    input b[16],
+    output out[16],
+    output z,
+    output v,
+    output n    
+  ) {
+  
+  alu_adder myAdder;
+  alu_bool myBool;
+  alu_shift myShift;
+  alu_comp myCompare;
+
+  always {
+    myAdder.a = a;
+    myAdder.b = b;
+    myAdder.alufnIn = alufn[1:0];
+    myBool.a = a;
+    myBool.b = b;
+    myBool.alufnIn = alufn[3:0];
+    myShift.a = a;
+    myShift.b = b[3:0];
+    myShift.alufnIn = alufn[2:0];
+    myCompare.a = a;
+    myCompare.b = b;
+    myCompare.alufnIn = alufn[2:1];
+    
+    
+    case(alufn[5:4]){
+      2b00: out = myAdder.out;
+      2b01: out = myBool.out;
+      2b10: out = myShift.out;
+      2b11: out = myCompare.out;
+      default: out = 0;
+    }
+    
+    z = myAdder.z;
+    v = myAdder.v;
+    n = myAdder.n;
+  }
+}

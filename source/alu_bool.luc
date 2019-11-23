@@ -1,0 +1,24 @@
+module alu_bool (
+    input a[16], // input a
+    input b[16], //input b
+    input alufnIn[4],
+    output out[16]
+  ) {
+  always {
+    if (alufnIn == 4b1000){
+    out = a & b; 
+    }
+    else if (alufnIn == 4b1110){
+    out = a | b;
+    }
+    else if (alufnIn == 4b0110){
+    out = a ^ b;
+    }
+    else if (alufnIn == 4b1010){
+    out = a;
+    }
+    else{
+      out = 0;
+    }
+  }
+}
