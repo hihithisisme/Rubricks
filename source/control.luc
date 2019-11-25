@@ -1,12 +1,17 @@
 module control (
     input clk,  // clock
-    input timer[8],
-    input user_button,
-    output xa1,
-    output xa2,
-    output xb1,
-    output xb2,
-    output animation[3]
+    input start_button,
+    input user_button[3],
+    input z,
+    output reg_wa[4],
+    output led_wa[2],
+    output wdsel[2],
+    output alufn[6],
+    output ra_address,
+    output rb_address,
+    output bdata[8],
+    output bsel
+
     /*
     output led_data_wdsel,
     output reg_file_wdsel,
@@ -16,57 +21,69 @@ module control (
     output reg_file_asel,
     output reg_file_alufn[6]*/
   ) {
-  
+  const BOOL_B = 6b011010;
   .clk(clk) {
-    fsm state = {A1,A2,A3,B1,B2};
+    fsm state = {IDLE,RNG0,RNG1,RNG2,USERIN_DISPLAY,USERIN_SHL,USERIN_ADD,
+                ANIMATE_SHL1,ANIMATE_ADD1,COLLIDE1,ANIMATE_DISPLAY1, // one for each COL
+                ANIMATE_SHL2,ANIMATE_ADD2,COLLIDE2,ANIMATE_DISPLAY2,
+                ANIMATE_SHL3,ANIMATE_ADD3,COLLIDE3,ANIMATE_DISPLAY3,
+                ANSWER_CHECK1,ANSWER_CHECK2,ANSWER_CHECK3,HALT};
     
     dff animate[3];      // change to limit it to 5 times
-    edge_detector timer_edge;
     
   }
-  sig out[4];
+  
+  rng myRNG;
   always {
-    timer_edge.in = timer[0];
+    reg_wa = 0;
+    led_wa = 0;
+    wdsel = 2b0;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
+    alufn = 6b000000;
+    ra_address = 0;
+    rb_address = 0;
+    bdata = 8b0;
+    bsel = 0;
     
     case(state.q){
-      state.A1: 
-        out = 1000;
-        animation = 001;
-        if(timer_edge.out == 1) state.d = state.A2;
+      state.IDLE:
+        if(start_button == 1) state.d = state.RNG0;
+    
+      state.RNG0:
+        reg_wa = 0;        // COL0 C0
+        led_wa = 0;
+        wdsel = 2b11;
+        alufn = BOOL_B;
+        bdata = myRNG.out[0];
+        bsel = 1;
+        state.d = state.RNG1;
         
-      state.A2:
-        out = 0100;
-        animation = 010;
-        if(timer_edge.out == 1) state.d = state.A3;
+      state.RNG1:
+        reg_wa = 3;
+        led_wa = 1;
+        wdsel = 2b11;
+        alufn = BOOL_B;
+        bdata = myRNG.out[1];
+        bsel = 1;
+        state.d = state.RNG2;
         
-      state.A3:
-        out = 0000;
-        animation = 100;
-        if(timer_edge.out == 1) state.d = state.B1;
+      state.RNG2:
+        reg_wa = 6;
+        led_wa = 2;
+        wdsel = 2b11;
+        alufn = BOOL_B;
+        bdata = myRNG.out[2];
+        bsel = 1;
+        //state.d = state.USERIN_DISPLAY;
         
-      //B1 state is very buggy. no idea why but in B1 it will show a1 as 1 as well even though it should not???
-      state.B1:
-        out = 0010;
-        animation = 000;
-        if(timer_edge.out == 1) animate.d = animate.q + 1;
-        if(user_button == 1) state.d = state.B2;
-        if(animate.q >= 3b011) {
-          animate.d = 3b000;
-          state.d = state.A1;
-        }
-        
-      state.B2:
-        out = 0001;
-        animation = 000;
-        if(timer_edge.out == 1) animate.d = animate.q + 1;
-        if(user_button == 1) state.d = state.B1;
-        
-      default: out = 0000;
-        animation = 000;
-    }
-    xa1 = out[3];
-    xa2 = out[2];
-    xb1 = out[1];
-    xb2 = out[0];
+      default: 
+        reg_wa = 00;
+        led_wa = 0;
+        wdsel = 2b00;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
+        alufn = 6b000000;
+        ra_address = 2b00;
+        rb_address = 2b00;
+        bdata = 0;
+        bsel = 0;
   }
+}
 }

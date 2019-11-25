@@ -1,13 +1,13 @@
 module alu_adder (
-    input a[16],
-    input b[16],
+    input a[8],
+    input b[8],
     input alufnIn[2],
-    output out[16],
+    output out[8],
     output z,
     output v,
     output n
   ) {
-  sig outread[16];
+  sig outread[8];
   
   always {
     // ADD
@@ -39,8 +39,8 @@ module alu_adder (
     }
     
     // z,v,n for compare module input
-    n = outread[15];
-    v = (a[15] & b[15] & (~outread[15])) | ((~a[15]) & (~b[15]) & outread[15]);
+    n = outread[7];
+    v = (a[7] & b[7] & (~outread[7])) | ((~a[7]) & (~b[7]) & outread[7]);
     z = ~| outread;
   }
 }

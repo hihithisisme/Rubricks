@@ -5,11 +5,11 @@
     <src>alu_shift.luc</src>
     <src>hardcode_screen.luc</src>
     <src>rom_screen_idle.luc</src>
+    <src>led_memory.luc</src>
     <src>control.luc</src>
     <src>rng.luc</src>
     <src>reg_file.luc</src>
     <src top="true">mojo_top.luc</src>
-    <src>led_matrix.luc</src>
     <src>led_ws2812b.luc</src>
     <src>alu_bool.luc</src>
     <src>alu_adder.luc</src>

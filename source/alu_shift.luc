@@ -1,8 +1,8 @@
 module alu_shift (
-    input a[16], // input a
-    input b[4], //input b
+    input a[8], // input a
+    input b[3], //input b
     input alufnIn[3],
-    output out[16]
+    output out[8]
   ) {
 //  sig sign;
   sig temp1[16];
@@ -19,12 +19,12 @@ module alu_shift (
     }
     else if(alufnIn == 3b100){ //rotate right
     temp1 = a>>b;
-    temp2 = a<<(16-b);
+    temp2 = a<<(8-b);
     out = temp1 + temp2;
     }
     else if(alufnIn == 3b101){ //rotate left
     temp1 = a<<b;
-    temp2 = a>>(16-b);
+    temp2 = a>>(8-b);
     out = temp1 + temp2;
     }
    

@@ -1,0 +1,41 @@
+module led_memory #(
+  ROWS = 8,
+  COLS = 3
+  )(
+    input clk,  // clock
+    input rst,
+    input colours[24],
+    input wdsel,
+    input wa[2],
+    input wd[8],
+    output led_out[3][8]
+  ) {
+  sig active_colour[24];
+  .clk(clk){
+    dff matrix[COLS][ROWS];
+    //led_ws2812b led[COLS](#SIZE(ROWS));
+    dff out_matrix[COLS][8 * 24](.rst(rst));
+  }
+  
+  always {
+    active_colour = colours;
+    if(wdsel == 1) matrix.d[wa] = wd;
+    /*
+    out_matrix.d[0] = c{24x{matrix.q[0][7]}, 24x{matrix.q[0][6]}, 
+                          24x{matrix.q[0][5]}, 24x{matrix.q[0][4]}, 24x{matrix.q[0][3]}, 
+                          24x{matrix.q[0][2]}, 24x{matrix.q[0][1]}, 24x{matrix.q[0][0]}} & 8x{active_colour};
+      
+    out_matrix.d[1] = c{24x{matrix.q[1][7]}, 24x{matrix.q[1][6]}, 
+                          24x{matrix.q[1][5]}, 24x{matrix.q[1][4]}, 24x{matrix.q[1][3]}, 
+                          24x{matrix.q[1][2]}, 24x{matrix.q[1][1]}, 24x{matrix.q[1][0]}} & 8x{active_colour};
+      
+    out_matrix.d[2] = c{24x{matrix.q[2][7]}, 24x{matrix.q[2][6]}, 
+                          24x{matrix.q[2][5]}, 24x{matrix.q[2][4]}, 24x{matrix.q[2][3]}, 
+                          24x{matrix.q[2][2]}, 24x{matrix.q[2][1]}, 24x{matrix.q[2][0]}} & 8x{active_colour};
+    
+    led.colors = out_matrix.q;
+    led_out = led.data_out; 
+    */
+    led_out = matrix.q;
+}
+}

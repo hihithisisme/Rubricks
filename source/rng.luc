@@ -1,10 +1,9 @@
 module rng (
-    input generate,
+    //input generate[1],
     output out[3][8]
   ) {
 
   always {
-    if(generate == 1) out = c{{8b00000111},{8b00000001},{8b00000000}};
-    else out = c{{8b00000000},{8b00000000},{8b00000000}};
+    out = c{{8b00000111},{8b00000001},{8b00000011}};
   }
 }

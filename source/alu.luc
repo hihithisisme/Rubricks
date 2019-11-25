@@ -1,30 +1,34 @@
 module alu (
     input alufn[6],
-    input a[16],
-    input b[16],
-    output out[16],
+    input a[8],
+    input b[8],
+    input bsel,
+    input bdata[8],
+    output out[8],
     output z,
     output v,
     output n    
   ) {
-  
+  sig op_b[8];
   alu_adder myAdder;
   alu_bool myBool;
   alu_shift myShift;
   alu_comp myCompare;
 
   always {
+    if(bsel == 0) op_b = b;
+    else op_b = bdata;
     myAdder.a = a;
-    myAdder.b = b;
+    myAdder.b = op_b;
     myAdder.alufnIn = alufn[1:0];
     myBool.a = a;
-    myBool.b = b;
+    myBool.b = op_b;
     myBool.alufnIn = alufn[3:0];
     myShift.a = a;
-    myShift.b = b[3:0];
+    myShift.b = op_b[2:0];
     myShift.alufnIn = alufn[2:0];
     myCompare.a = a;
-    myCompare.b = b;
+    myCompare.b = op_b;
     myCompare.alufnIn = alufn[2:1];
     
     
