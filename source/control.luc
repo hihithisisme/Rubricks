@@ -7,8 +7,8 @@ module control (
     output led_wa[2],
     output wdsel[2],
     output alufn[6],
-    output ra_address,
-    output rb_address,
+    output ra_address[4],
+    output rb_address[4],
     output bdata[8],
     output bsel
 
@@ -22,25 +22,27 @@ module control (
     output reg_file_alufn[6]*/
   ) {
   const BOOL_B = 6b011010;
+  const SHL = 6b100000;
+  const ADD = 6b000000;
   .clk(clk) {
-    fsm state = {IDLE,RNG0,RNG1,RNG2,USERIN_DISPLAY,USERIN_SHL,USERIN_ADD,
+    fsm state = {IDLE,RNG0,RNG1,RNG2,USERIN_SHL,USERIN_ADD,
+                USERIN_DISPLAY0,USERIN_DISPLAY1,USERIN_DISPLAY2,
+                ANIMATE_SHL0,ANIMATE_ADD0,COLLIDE0,ANIMATE_DISPLAY0,
                 ANIMATE_SHL1,ANIMATE_ADD1,COLLIDE1,ANIMATE_DISPLAY1, // one for each COL
                 ANIMATE_SHL2,ANIMATE_ADD2,COLLIDE2,ANIMATE_DISPLAY2,
-                ANIMATE_SHL3,ANIMATE_ADD3,COLLIDE3,ANIMATE_DISPLAY3,
                 ANSWER_CHECK1,ANSWER_CHECK2,ANSWER_CHECK3,HALT};
-    
+    dff button_pressed[2];
     dff animate[3];      // change to limit it to 5 times
-    
   }
   
   rng myRNG;
   always {
-    reg_wa = 0;
-    led_wa = 0;
+    reg_wa = d10;
+    led_wa = 3;
     wdsel = 2b0;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
     alufn = 6b000000;
-    ra_address = 0;
-    rb_address = 0;
+    ra_address = d10;
+    rb_address = d10;
     bdata = 8b0;
     bsel = 0;
     
@@ -50,31 +52,105 @@ module control (
     
       state.RNG0:
         reg_wa = 0;        // COL0 C0
-        led_wa = 0;
-        wdsel = 2b11;
+        //led_wa = 0;
+        wdsel = 2b10;
         alufn = BOOL_B;
         bdata = myRNG.out[0];
         bsel = 1;
         state.d = state.RNG1;
-        
       state.RNG1:
         reg_wa = 3;
-        led_wa = 1;
-        wdsel = 2b11;
+        //led_wa = 1;
+        wdsel = 2b10;
         alufn = BOOL_B;
         bdata = myRNG.out[1];
         bsel = 1;
         state.d = state.RNG2;
-        
       state.RNG2:
         reg_wa = 6;
-        led_wa = 2;
-        wdsel = 2b11;
+        //led_wa = 2;
+        wdsel = 2b10;
         alufn = BOOL_B;
         bdata = myRNG.out[2];
         bsel = 1;
-        //state.d = state.USERIN_DISPLAY;
+        state.d = state.USERIN_DISPLAY0;
         
+      state.USERIN_DISPLAY0:
+        //reg_wa = 
+        led_wa = 0;
+        wdsel = 2b01;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 0;
+        rb_address = 1;
+        state.d = state.USERIN_DISPLAY1;
+      state.USERIN_DISPLAY1:
+        //reg_wa = 
+        led_wa = 1;
+        wdsel = 2b01;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 3;
+        rb_address = 4;
+        state.d = state.USERIN_DISPLAY2;
+      state.USERIN_DISPLAY2:
+        //reg_wa = 
+        led_wa = 2;
+        wdsel = 2b01;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 6;
+        rb_address = 7;
+        if(user_button[0] == 1) {
+          button_pressed.d = 0;
+          state.d = state.USERIN_SHL;
+        }
+        if(user_button[1] == 1) {
+          button_pressed.d = 1;
+          state.d = state.USERIN_SHL;
+        }
+        if(user_button[2] == 1) {
+          button_pressed.d = 2;
+          state.d = state.USERIN_SHL;
+        }
+        
+      state.USERIN_SHL:
+        reg_wa = button_pressed.q * 3 + 1;    // corresponds to respective COLS 1st cell
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = SHL;
+        bdata = 1;
+        bsel = 1;
+        ra_address = button_pressed.q * 3 + 1;
+        //rb_address = 
+        state.d = state.USERIN_ADD;
+        
+      state.USERIN_ADD:
+        reg_wa = button_pressed.q * 3 + 1;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = ADD;
+        bdata = 1;
+        bsel = 1;
+        ra_address = button_pressed.q * 3 + 1;
+        //rb_address =
+        state.d = state.USERIN_DISPLAY0;
+        
+        /*
+      state.USERIN_DISPLAY:
+        reg_wa = 
+        led_wa = 
+        wdsel = 
+        alufn = 
+        bdata = 
+        bsel = 
+        ra_address = 
+        rb_address = 
+        state
+        */
       default: 
         reg_wa = 00;
         led_wa = 0;
