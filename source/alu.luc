@@ -20,7 +20,7 @@ module alu (
     else op_b = bdata;
     myAdder.a = a;
     myAdder.b = op_b;
-    myAdder.alufnIn = alufn[1:0];
+    myAdder.alufnIn = alufn[0];
     myBool.a = a;
     myBool.b = op_b;
     myBool.alufnIn = alufn[3:0];

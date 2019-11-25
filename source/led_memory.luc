@@ -8,6 +8,7 @@ module led_memory #(
     input wdsel,
     input wa[2],
     input wd[8],
+    input reset,
     output led_out[3][8]
   ) {
   sig active_colour[24];
@@ -20,6 +21,9 @@ module led_memory #(
   always {
     active_colour = colours;
     if(wdsel == 1) matrix.d[wa] = wd;
+    if(reset == 1) {
+    matrix.d = 3x{{8b0}};
+    }
     /*
     out_matrix.d[0] = c{24x{matrix.q[0][7]}, 24x{matrix.q[0][6]}, 
                           24x{matrix.q[0][5]}, 24x{matrix.q[0][4]}, 24x{matrix.q[0][3]}, 

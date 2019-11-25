@@ -9,6 +9,7 @@ module reg_file #(
     input wa[4],    // address to write to
     input wdsel,    // should be redundant, but just in case
     input wd[8],   // data to be written
+    input reset,
     output ra_data[8],
     output rb_data[8],
     
@@ -27,6 +28,9 @@ module reg_file #(
   //  print("{}{}: ra_data = regs.q[{}][{}];".format(i,j,i,j))
 
   always {
+    if(reset == 1) {
+    regs.d = 16x{{8b0}};
+    }
   
     ra_data = regs.q[ra_address];
     rb_data = regs.q[rb_address];

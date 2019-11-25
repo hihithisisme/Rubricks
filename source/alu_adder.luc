@@ -1,7 +1,7 @@
 module alu_adder (
     input a[8],
     input b[8],
-    input alufnIn[2],
+    input alufnIn[1],
     output out[8],
     output z,
     output v,
@@ -11,32 +11,21 @@ module alu_adder (
   
   always {
     // ADD
-    if(alufnIn == 2b00){
+    if(alufnIn == 0){
         out = a + b;
         outread = a + b;
     }
       
     // SUB
-    else if(alufnIn == 2b01) {
+    else if(alufnIn == 1) {
         out = a - b;
         outread = a - b;
     }
       
-    // MUL
-    else if(alufnIn == 2b10){
-        out = a*b;
-        outread = a*b;
-    }
-      
-    // DIV (note we can only test for the floor of division)
-    else if(alufnIn == 2b11){
-        out = a/b;
-        outread = a/b;
-    }
     else{
         out = 0;
         outread = 0;
-    }
+    }    
     
     // z,v,n for compare module input
     n = outread[7];

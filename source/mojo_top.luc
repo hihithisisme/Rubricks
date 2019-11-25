@@ -83,11 +83,13 @@ module mojo_top (
         myReg.wd = myALU.out;
         myReg.ra_address = myCtl.ra_address;
         myReg.rb_address = myCtl.rb_address;
+        myReg.reset = myCtl.reset;
    
         // init myLED
         myLED.wdsel = myCtl.wdsel[0];
         myLED.wa = myCtl.led_wa;
         myLED.wd = myALU.out;
+        myLED.reset = myCtl.reset;
         myLED.colours = colour.q;
         led_data = 0;
     /*    
