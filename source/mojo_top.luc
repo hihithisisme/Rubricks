@@ -25,9 +25,9 @@ module mojo_top (
     ) {
   
     sig rst;    // reset signal
-    sig control_ra[2];
-    sig control_rb[2];
-    sig control_wa[2];
+    sig control_ra[4];
+    sig control_rb[4];
+    sig control_wa[4];
     sig wdsel;
     alu myALU;
     reg_file myReg;
@@ -35,7 +35,6 @@ module mojo_top (
     // need to change if these constants change
     const ROWS = 8;
     const COLS = 3;
-    sig i;
 
 
     .clk(clk) {
@@ -73,10 +72,10 @@ module mojo_top (
         
         // testing register files
         myReg.clk = clk;  // connect reg_file clk to a slower clock to observe changes
-        control_ra = 00;
-        control_rb = 10;
-        if(io_dip[2][1] == 1) control_wa = 10;
-        else control_wa = 00;
+        control_ra = 3;
+        control_rb = 6;
+        if(io_dip[2][1] == 1) control_wa = 6;
+        else control_wa = 3;
         myALU.alufn = io_dip[2][7:2];
         wdsel = edge.out;
     
