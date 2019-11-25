@@ -1,0 +1,72 @@
+module control (
+    input clk,  // clock
+    input timer[8],
+    input user_button,
+    output xa1,
+    output xa2,
+    output xb1,
+    output xb2,
+    output animation[3]
+    /*
+    output led_data_wdsel,
+    output reg_file_wdsel,
+    output reg_file_ra,
+    output reg_file_rb,
+    output reg_file_adata[8],
+    output reg_file_asel,
+    output reg_file_alufn[6]*/
+  ) {
+  
+  .clk(clk) {
+    fsm state = {A1,A2,A3,B1,B2};
+    
+    dff animate[3];      // change to limit it to 5 times
+    edge_detector timer_edge;
+    
+  }
+  sig out[4];
+  always {
+    timer_edge.in = timer[0];
+    
+    case(state.q){
+      state.A1: 
+        out = 1000;
+        animation = 001;
+        if(timer_edge.out == 1) state.d = state.A2;
+        
+      state.A2:
+        out = 0100;
+        animation = 010;
+        if(timer_edge.out == 1) state.d = state.A3;
+        
+      state.A3:
+        out = 0000;
+        animation = 100;
+        if(timer_edge.out == 1) state.d = state.B1;
+        
+      //B1 state is very buggy. no idea why but in B1 it will show a1 as 1 as well even though it should not???
+      state.B1:
+        out = 0010;
+        animation = 000;
+        if(timer_edge.out == 1) animate.d = animate.q + 1;
+        if(user_button == 1) state.d = state.B2;
+        if(animate.q >= 3b011) {
+          animate.d = 3b000;
+          state.d = state.A1;
+        }
+        
+      state.B2:
+        out = 0001;
+        animation = 000;
+        if(timer_edge.out == 1) animate.d = animate.q + 1;
+        if(user_button == 1) state.d = state.B1;
+        
+      default: out = 0000;
+        animation = 000;
+    }
+    xa1 = out[3];
+    xa2 = out[2];
+    xb1 = out[1];
+    xb2 = out[0];
+  }
+}

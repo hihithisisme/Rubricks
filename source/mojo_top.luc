@@ -29,21 +29,21 @@ module mojo_top (
     sig control_rb[2];
     sig control_wa[2];
     sig wdsel;
-    alu myALU;
-    reg_file myReg;
+    /*alu myALU;
+    reg_file myReg;*/
+    control ctl;
     // led_matrix and init_blk are hardcoded, 
     // need to change if these constants change
     const ROWS = 8;
     const COLS = 3;
-    sig i;
 
 
     .clk(clk) {
         reset_conditioner reset_cond;
         button_conditioner button_cond;
-        edge_detector edge (#RISE(1), #FALL(0));
+        edge_detector button_edge (#RISE(1), #FALL(0));
         .rst(rst){
-        counter caseCount (#SIZE(8), #DIV(25));
+        counter timer (#SIZE(8), #DIV(25));
         }
         dff reset;
         dff color1[24];
@@ -55,7 +55,6 @@ module mojo_top (
     }
 
     always {
-    
         reset_cond.in = reset.q;
         rst = reset_cond.out;
     
@@ -67,10 +66,23 @@ module mojo_top (
         io_seg = 8hff;          // turn segments off
         io_sel = 4hf;           // select no digits
     
-        edge.in = button_cond.out;
+        button_edge.in = button_cond.out;
         button_cond.in = io_button[1];
+    
+        // testing control
+        ctl.clk = clk;
+        ctl.timer = timer.value;
+        ctl.user_button = button_edge.out;
+        
+        io_led[0][6] = ctl.xb2;
+        io_led[0][7] = ctl.xb1;      
+        io_led[1][6] = ctl.xa2;
+        io_led[1][7] = ctl.xa1;
+        io_led[2][4:0] = timer.value;
+        io_led[2][7:5] = ctl.animation;
         
         
+        /*
         // testing register files
         myReg.clk = clk;  // connect reg_file clk to a slower clock to observe changes
         control_ra = 00;
@@ -95,6 +107,7 @@ module mojo_top (
         io_led[0] = myReg.test0;
         io_led[1] = myReg.test1;
         io_led[2] = myALU.out;
+    */
     
     
     
@@ -106,9 +119,9 @@ module mojo_top (
         led_data = led_matrix.led_data;
     
         
-        led_matrix_temp.d[0] = caseCount.value;
-        led_matrix_temp.d[1] = caseCount.value;
-        led_matrix_temp.d[2] = caseCount.value;
+        led_matrix_temp.d[0] = timer.value;
+        led_matrix_temp.d[1] = timer.value;
+        led_matrix_temp.d[2] = timer.value;
         
         color1.d = Color.RED;
         color2.d = Color.BLUE;
