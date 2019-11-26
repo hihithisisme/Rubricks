@@ -40,6 +40,7 @@ module mojo_top (
         edge_detector user_edge[3] (#RISE(1), #FALL(0));
         button_conditioner start_cond[1];
         edge_detector start_edge[1] (#RISE(1), #FALL(0));
+
         .rst(rst){
         counter timer (#SIZE(8), #DIV(25));
         led_memory myLED;
@@ -91,6 +92,7 @@ module mojo_top (
         myLED.wd = myALU.out;
         myLED.reset = myCtl.reset;
         myLED.colours = colour.q;
+        //led_data = myLED.led_out;
         led_data = 0;
     /*    
         io_led[0] = myALU.out;
@@ -99,7 +101,7 @@ module mojo_top (
     
         io_led[0] = myLED.led_out[0];
         io_led[1] = myLED.led_out[1];
-        io_led[2] = myLED.led_out[2];
+        io_led[2] = myCtl.test;//myLED.led_out[2];
   }
 }
         

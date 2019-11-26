@@ -37,12 +37,18 @@ module control (
                 COLLIDE0CHECK,COLLIDE1CHECK,COLLIDE2CHECK,
                 ANSWER_CHECK0,ANSWER_CHECK1,ANSWER_CHECK2,
                 HALT,CLEAR};
-    dff button_pressed[2];
-    dff animate[3];      // change to limit it to 5 times
+    dff button_pressed[2];    // keeps track of the button pressed 
+    dff animate[3];           // ensures that the blocks only drop a max of 5 times
+    dff level[4];
+
+    counter timer (#SIZE(8), #DIV(24), #TOP(255));            // keeps track of the time available 
   }
-  
+  sig timer_reset;
   rng myRNG;
   always {
+    timer_reset = 0;
+    timer.rst = timer_reset;
+    
     reg_wa = d10;
     led_wa = 3;
     wdsel = 2b0;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
@@ -51,37 +57,41 @@ module control (
     rb_address = d10;
     bdata = 8b0;
     bsel = 0;
-    test = 8b00000000;
+    test = level.q;
     reset = 0;
     
     case(state.q){
       state.IDLE:
-        test = 8b10000001;
-        if(start_button == 1) state.d = state.RNG0;
+        level.d = level. q + 1;
+        if(start_button == 1) {
+          state.d = state.RNG0;
+        }
     
       state.RNG0:          // can consider for the extremely hard difficulty to switch the rng values in another reg; coded to be "reg_wa = 3 + hard;" hard = 0 or 10
         reg_wa = 0;        // COL0 C0
-        //led_wa = 0;
-        wdsel = 2b10;
+        led_wa = 0;
+        wdsel = 2b11;
         alufn = BOOL_B;
         bdata = myRNG.out[0];
         bsel = 1;
         state.d = state.RNG1;
       state.RNG1:
         reg_wa = 3;
-        //led_wa = 1;
-        wdsel = 2b10;
+        led_wa = 1;
+        wdsel = 2b11;
         alufn = BOOL_B;
         bdata = myRNG.out[1];
         bsel = 1;
         state.d = state.RNG2;
       state.RNG2:
         reg_wa = 6;
-        //led_wa = 2;
-        wdsel = 2b10;
+        led_wa = 2;
+        wdsel = 2b11;
         alufn = BOOL_B;
         bdata = myRNG.out[2];
         bsel = 1;
+        timer_reset = 1;
+        timer.rst = timer_reset;          // start the timer for the user_button input
         state.d = state.USERIN_DISPLAY0;
         
       state.USERIN_DISPLAY0:
@@ -113,6 +123,8 @@ module control (
         //bsel = 
         ra_address = 6;
         rb_address = 7;
+        if(timer.value >= (b10000000 >> level.q)) state.d = state.ANIMATE_SHL0;    //b100 is pretty hard, second hardest? TODO: calibration of timing
+        else {
         if(start_button == 1) state.d = state.ANIMATE_SHL0;
         if(user_button[0] == 1) {
           button_pressed.d = 0;
@@ -125,7 +137,7 @@ module control (
         if(user_button[2] == 1) {
           button_pressed.d = 2;
           state.d = state.USERIN_SHL;
-        }
+        }}
         
       state.USERIN_SHL:
         reg_wa = button_pressed.q * 3 + 1;    // corresponds to respective COLS 1st cell
@@ -282,7 +294,6 @@ module control (
         //bsel = 
         //ra_address = 
         rb_address = 2;
-        test = 8b10000000;
         state.d = state.ANIMATE_DISPLAY1;
       state.ANIMATE_DISPLAY1:
         //reg_wa = 
@@ -293,8 +304,11 @@ module control (
         //bsel = 
         //ra_address = 
         rb_address = 5;
+        timer_reset = 1;
+        timer.rst = timer_reset;      // for some reason need to re connect the rst again
         state.d = state.ANIMATE_DISPLAY2;
       state.ANIMATE_DISPLAY2:
+        if(timer.value >= 8b00000010){ 
         //reg_wa = 
         led_wa = 2;
         wdsel = 2b01;
@@ -303,8 +317,6 @@ module control (
         //bsel = 
         //ra_address = 
         rb_address = 8;
-        test = 8b00001000;
-        if(start_button == 1){
         if(animate.q == 4) {
           animate.d = 0;
           state.d = state.ANSWER_CHECK0;
@@ -322,11 +334,8 @@ module control (
         bsel = 1;
         ra_address = 2;
         //rb_address = 
-        test = 8b00000001;
-        if(start_button == 1){
         if(z == 1) state.d = state.ANSWER_CHECK1;
         else state.d = state.HALT;
-        }
       state.ANSWER_CHECK1:
         //reg_wa = 
         //led_wa = 
@@ -336,11 +345,8 @@ module control (
         bsel = 1;
         ra_address = 5;
         //rb_address = 
-        test = 8b00000010;
-        if(start_button == 1){
         if(z == 1) state.d = state.ANSWER_CHECK2;
         else state.d = state.HALT;
-        }
       state.ANSWER_CHECK2:
         //reg_wa = 
         //led_wa = 
@@ -350,11 +356,8 @@ module control (
         bsel = 1;
         ra_address = 8;
         //rb_address = 
-        test = 8b00000100;
-        if(start_button == 1){
         if(z == 1) state.d = state.CLEAR;
         else state.d = state.HALT;
-        }
       state.HALT: 
         led_wa = 0;
         wdsel = 2b01;
@@ -366,7 +369,6 @@ module control (
       state.CLEAR:
         reset = 1;
         state.d = state.IDLE;
-        
         
       default: 
         reg_wa = 00;
