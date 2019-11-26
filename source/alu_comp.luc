@@ -1,6 +1,6 @@
 module alu_comp (
-    input a[16], 
-    input b[16],
+    input a[8], 
+    input b[8],
     input alufnIn[2],
     output out
   ) {

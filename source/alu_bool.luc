@@ -1,8 +1,8 @@
 module alu_bool (
-    input a[16], // input a
-    input b[16], //input b
+    input a[8], // input a
+    input b[8], //input b
     input alufnIn[4],
-    output out[16]
+    output out[8]
   ) {
   always {
     if (alufnIn == 4b1000){
@@ -15,6 +15,9 @@ module alu_bool (
     out = a ^ b;
     }
     else if (alufnIn == 4b1010){
+    out = b;
+    }
+    else if (alufnIn == 4b1100){
     out = a;
     }
     else{

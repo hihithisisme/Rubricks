@@ -1,0 +1,384 @@
+module control (
+    input clk,  // clock
+    input start_button,
+    input user_button[3],
+    input z,
+    output reg_wa[4],
+    output led_wa[2],
+    output wdsel[2],
+    output alufn[6],
+    output ra_address[4],
+    output rb_address[4],
+    output bdata[8],
+    output bsel,
+    output reset,
+    output test[8]
+
+    /*
+    output led_data_wdsel,
+    output reg_file_wdsel,
+    output reg_file_ra,
+    output reg_file_rb,
+    output reg_file_adata[8],
+    output reg_file_asel,
+    output reg_file_alufn[6]*/
+  ) {
+  const BOOL_B = 6b011010;
+  const BOOL_AND = 6b011000;
+  const SHL = 6b100000;
+  const ADD = 6b000000;
+  const SUB = 6b000001;
+  .clk(clk) {
+    fsm state = {IDLE,RNG0,RNG1,RNG2,USERIN_SHL,USERIN_ADD,
+                USERIN_DISPLAY0,USERIN_DISPLAY1,USERIN_DISPLAY2,
+                ANIMATE_SHL0,ANIMATE_ADD0,COLLIDE0,ANIMATE_DISPLAY0,  // ANIMATE_SHL0 is entry into animate cycle
+                ANIMATE_SHL1,ANIMATE_ADD1,COLLIDE1,ANIMATE_DISPLAY1, 
+                ANIMATE_SHL2,ANIMATE_ADD2,COLLIDE2,ANIMATE_DISPLAY2,
+                COLLIDE0CHECK,COLLIDE1CHECK,COLLIDE2CHECK,
+                ANSWER_CHECK0,ANSWER_CHECK1,ANSWER_CHECK2,
+                HALT,CLEAR};
+    dff button_pressed[2];    // keeps track of the button pressed 
+    dff animate[3];           // ensures that the blocks only drop a max of 5 times
+    dff level[4];
+
+    counter timer (#SIZE(8), #DIV(24), #TOP(255));            // keeps track of the time available 
+  }
+  sig timer_reset;
+  rng myRNG;
+  always {
+    timer_reset = 0;
+    timer.rst = timer_reset;
+    
+    reg_wa = d10;
+    led_wa = 3;
+    wdsel = 2b0;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
+    alufn = 6b000000;
+    ra_address = d10;
+    rb_address = d10;
+    bdata = 8b0;
+    bsel = 0;
+    test = level.q;
+    reset = 0;
+    
+    case(state.q){
+      state.IDLE:
+        level.d = level. q + 1;
+        if(start_button == 1) {
+          state.d = state.RNG0;
+        }
+    
+      state.RNG0:          // can consider for the extremely hard difficulty to switch the rng values in another reg; coded to be "reg_wa = 3 + hard;" hard = 0 or 10
+        reg_wa = 0;        // COL0 C0
+        led_wa = 0;
+        wdsel = 2b11;
+        alufn = BOOL_B;
+        bdata = myRNG.out[0];
+        bsel = 1;
+        state.d = state.RNG1;
+      state.RNG1:
+        reg_wa = 3;
+        led_wa = 1;
+        wdsel = 2b11;
+        alufn = BOOL_B;
+        bdata = myRNG.out[1];
+        bsel = 1;
+        state.d = state.RNG2;
+      state.RNG2:
+        reg_wa = 6;
+        led_wa = 2;
+        wdsel = 2b11;
+        alufn = BOOL_B;
+        bdata = myRNG.out[2];
+        bsel = 1;
+        timer_reset = 1;
+        timer.rst = timer_reset;          // start the timer for the user_button input
+        state.d = state.USERIN_DISPLAY0;
+        
+      state.USERIN_DISPLAY0:
+        //reg_wa = 
+        led_wa = 0;
+        wdsel = 2b01;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 0;
+        rb_address = 1;
+        state.d = state.USERIN_DISPLAY1;
+      state.USERIN_DISPLAY1:
+        //reg_wa = 
+        led_wa = 1;
+        wdsel = 2b01;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 3;
+        rb_address = 4;
+        state.d = state.USERIN_DISPLAY2;
+      state.USERIN_DISPLAY2:
+        //reg_wa = 
+        led_wa = 2;
+        wdsel = 2b01;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 6;
+        rb_address = 7;
+        if(timer.value >= (b10000000 >> level.q)) state.d = state.ANIMATE_SHL0;    //b100 is pretty hard, second hardest? TODO: calibration of timing
+        else {
+        if(start_button == 1) state.d = state.ANIMATE_SHL0;
+        if(user_button[0] == 1) {
+          button_pressed.d = 0;
+          state.d = state.USERIN_SHL;
+        }
+        if(user_button[1] == 1) {
+          button_pressed.d = 1;
+          state.d = state.USERIN_SHL;
+        }
+        if(user_button[2] == 1) {
+          button_pressed.d = 2;
+          state.d = state.USERIN_SHL;
+        }}
+        
+      state.USERIN_SHL:
+        reg_wa = button_pressed.q * 3 + 1;    // corresponds to respective COLS 1st cell
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = SHL;
+        bdata = 1;
+        bsel = 1;
+        ra_address = button_pressed.q * 3 + 1;
+        //rb_address = 
+        state.d = state.USERIN_ADD;
+      state.USERIN_ADD:
+        reg_wa = button_pressed.q * 3 + 1;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = ADD;
+        bdata = 1;
+        bsel = 1;
+        ra_address = button_pressed.q * 3 + 1;
+        //rb_address =
+        state.d = state.USERIN_DISPLAY0;
+        
+      state.ANIMATE_SHL0:
+        reg_wa = 1;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = SHL;
+        bdata = 1;
+        bsel = 1;
+        ra_address = 1;
+        //rb_address = 
+        state.d = state.ANIMATE_ADD0;
+      state.ANIMATE_ADD0:
+        reg_wa = 2;
+        //led_wa = 0;
+        wdsel = 2b10;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 0;
+        rb_address = 1;
+        state.d = state.ANIMATE_SHL1;
+      state.ANIMATE_SHL1:
+        reg_wa = 4;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = SHL;
+        bdata = 1;
+        bsel = 1;
+        ra_address = 4;
+        //rb_address = 
+        state.d = state.ANIMATE_ADD1;
+      state.ANIMATE_ADD1:
+        reg_wa = 5;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 3;
+        rb_address = 4;
+        state.d = state.ANIMATE_SHL2;
+      state.ANIMATE_SHL2:
+        reg_wa = 7;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = SHL;
+        bdata = 1;
+        bsel = 1;
+        ra_address = 7;
+        //rb_address = 
+        state.d = state.ANIMATE_ADD2;
+      state.ANIMATE_ADD2:
+        reg_wa = 8;
+        //led_wa = 2;
+        wdsel = 2b10;
+        alufn = ADD;
+        //bdata = 
+        //bsel = 
+        ra_address = 6;
+        rb_address = 7;
+        state.d = state.COLLIDE0;
+      
+      state.COLLIDE0:
+        reg_wa = 9;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = BOOL_AND;
+        //bdata = 
+        //bsel = 
+        ra_address = 0;
+        rb_address = 1;
+        state.d = state.COLLIDE0CHECK;
+      state.COLLIDE0CHECK:
+        //reg_wa = 
+        //led_wa = 
+        wdsel = 2b00;
+        alufn = ADD;
+        bdata = 0;
+        bsel = 1;
+        ra_address = 9;
+        //rb_address = 1;
+        if(z == 1) state.d = state.COLLIDE1;
+        else state.d = state.HALT;
+      state.COLLIDE1:
+        reg_wa = 9;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = BOOL_AND;
+        //bdata = 
+        //bsel = 
+        ra_address = 3;
+        rb_address = 4;
+        state.d = state.COLLIDE1CHECK;
+      state.COLLIDE1CHECK:
+        //reg_wa = 
+        //led_wa = 
+        wdsel = 2b00;
+        alufn = ADD;
+        bdata = 0;
+        bsel = 1;
+        ra_address = 9;
+        //rb_address = 1;
+        if(z == 1) state.d = state.COLLIDE2;
+        else state.d = state.HALT;
+      state.COLLIDE2:
+        reg_wa = 9;
+        //led_wa = 
+        wdsel = 2b10;
+        alufn = BOOL_AND;
+        //bdata = 
+        //bsel = 
+        ra_address = 6;
+        rb_address = 7;
+        state.d = state.COLLIDE2CHECK;
+      state.COLLIDE2CHECK:
+        //reg_wa = 
+        //led_wa = 
+        wdsel = 2b00;
+        alufn = ADD;
+        bdata = 0;
+        bsel = 1;
+        ra_address = 9;
+        //rb_address = 1;
+        if(z == 1) state.d = state.ANIMATE_DISPLAY0;
+        else state.d = state.HALT;
+        
+      state.ANIMATE_DISPLAY0:
+        //reg_wa = 
+        led_wa = 0;
+        wdsel = 2b01;
+        alufn = BOOL_B;
+        //bdata = 
+        //bsel = 
+        //ra_address = 
+        rb_address = 2;
+        state.d = state.ANIMATE_DISPLAY1;
+      state.ANIMATE_DISPLAY1:
+        //reg_wa = 
+        led_wa = 1;
+        wdsel = 2b01;
+        alufn = BOOL_B;
+        //bdata = 
+        //bsel = 
+        //ra_address = 
+        rb_address = 5;
+        timer_reset = 1;
+        timer.rst = timer_reset;      // for some reason need to re connect the rst again
+        state.d = state.ANIMATE_DISPLAY2;
+      state.ANIMATE_DISPLAY2:
+        if(timer.value >= 8b00000010){ 
+        //reg_wa = 
+        led_wa = 2;
+        wdsel = 2b01;
+        alufn = BOOL_B;
+        //bdata = 
+        //bsel = 
+        //ra_address = 
+        rb_address = 8;
+        if(animate.q == 4) {
+          animate.d = 0;
+          state.d = state.ANSWER_CHECK0;
+        } else {
+          animate.d = animate.q + 1;
+          state.d = state.ANIMATE_SHL0;
+        }}
+        
+      state.ANSWER_CHECK0:
+        //reg_wa = 
+        //led_wa = 
+        wdsel = 2b00;
+        alufn = SUB;
+        bdata = 8b11100000;
+        bsel = 1;
+        ra_address = 2;
+        //rb_address = 
+        if(z == 1) state.d = state.ANSWER_CHECK1;
+        else state.d = state.HALT;
+      state.ANSWER_CHECK1:
+        //reg_wa = 
+        //led_wa = 
+        wdsel = 2b00;
+        alufn = SUB;
+        bdata = 8b11100000;
+        bsel = 1;
+        ra_address = 5;
+        //rb_address = 
+        if(z == 1) state.d = state.ANSWER_CHECK2;
+        else state.d = state.HALT;
+      state.ANSWER_CHECK2:
+        //reg_wa = 
+        //led_wa = 
+        wdsel = 2b00;
+        alufn = SUB;
+        bdata = 8b11100000;
+        bsel = 1;
+        ra_address = 8;
+        //rb_address = 
+        if(z == 1) state.d = state.CLEAR;
+        else state.d = state.HALT;
+      state.HALT: 
+        led_wa = 0;
+        wdsel = 2b01;
+        alufn = BOOL_B;
+        bdata = 8b11111111;
+        bsel = 1;
+        if(start_button == 1) state.d = state.CLEAR;
+        
+      state.CLEAR:
+        reset = 1;
+        state.d = state.IDLE;
+        
+      default: 
+        reg_wa = 00;
+        led_wa = 0;
+        wdsel = 2b00;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
+        alufn = 6b000000;
+        ra_address = 2b00;
+        rb_address = 2b00;
+        bdata = 0;
+        bsel = 0;
+  }
+}
+}

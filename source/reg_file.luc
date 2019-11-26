@@ -4,11 +4,12 @@ module reg_file #(
   )(
     input clk,  // clock
     //input rst,  // reset    
-    input ra_address[2],
-    input rb_address[2],
-    input wa[2],    // address to write to
+    input ra_address[4],
+    input rb_address[4],
+    input wa[4],    // address to write to
     input wdsel,    // should be redundant, but just in case
     input wd[8],   // data to be written
+    input reset,
     output ra_data[8],
     output rb_data[8],
     
@@ -18,7 +19,7 @@ module reg_file #(
   ) {
   
   .clk(clk){
-    dff regs[COLS+1][3][8]; // 3 registers for each column: (0) rng com given (1) user input (2) SHL of user input; additional col for processing
+    dff regs[16][ROWS]; // 3 registers for each column: (0) rng com given (1) user input (2) SHL of user input; additional col for processing
   }
   
   // PYTHON CODE FOR HARDCODING REGISTERS
@@ -27,13 +28,16 @@ module reg_file #(
   //  print("{}{}: ra_data = regs.q[{}][{}];".format(i,j,i,j))
 
   always {
+    if(reset == 1) {
+    regs.d = 16x{{8b0}};
+    }
   
-    ra_data = regs.q[ra_address[0]][ra_address[1]];
-    rb_data = regs.q[rb_address[0]][rb_address[1]];
-    if(wdsel == 1) regs.d[wa[0]][wa[1]] = wd;
+    ra_data = regs.q[ra_address];
+    rb_data = regs.q[rb_address];
+    if(wdsel == 1) regs.d[wa] = wd;
     
-    test0 = regs.q[0][0];
-    test1 = regs.q[0][1];    // corresponds to wa = 10
+    test0 = regs.q[ra_address];
+    test1 = regs.q[rb_address];    // corresponds to wa = 10
     test2 = regs.q[0][1];
 }
 }

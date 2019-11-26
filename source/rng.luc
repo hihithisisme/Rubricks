@@ -1,0 +1,9 @@
+module rng (
+    //input generate[1],
+    output out[3][8]
+  ) {
+
+  always {
+    out = c{{8b11100000},{8b10000000},{8b11000000}};
+  }
+}
