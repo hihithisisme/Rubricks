@@ -1,4 +1,15 @@
-NET "led_data<0>"  LOC = P32 | IOSTANDARD = LVTTL;
-NET "led_data<1>"  LOC = P34 | IOSTANDARD = LVTTL;
-NET "led_data<2>"  LOC = P40 | IOSTANDARD = LVTTL;
-NET "user_button<0>" LOC = P118 | IOSTANDARD = LVTTL;
+NET "led_data<0>"  LOC = P57 | IOSTANDARD = LVTTL;
+NET "led_data<1>"  LOC = P66 | IOSTANDARD = LVTTL;
+NET "led_data<2>"  LOC = P74 | IOSTANDARD = LVTTL;
+NET "led_data<3>"  LOC = P78 | IOSTANDARD = LVTTL;
+NET "led_data<4>"  LOC = P80 | IOSTANDARD = LVTTL;
+NET "led_data<5>"  LOC = P82 | IOSTANDARD = LVTTL;
+NET "led_data<6>"  LOC = P84 | IOSTANDARD = LVTTL;
+
+NET "user_button<0>" LOC = P51 | IOSTANDARD = LVTTL;
+NET "user_button<1>" LOC = P41 | IOSTANDARD = LVTTL;
+NET "user_button<2>" LOC = P35 | IOSTANDARD = LVTTL;
+NET "user_button<3>" LOC = P33 | IOSTANDARD = LVTTL;
+NET "user_button<4>" LOC = P30 | IOSTANDARD = LVTTL;
+NET "user_button<5>" LOC = P27 | IOSTANDARD = LVTTL;
+NET "start_button<0>" LOC = P24 | IOSTANDARD = LVTTL;
