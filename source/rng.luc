@@ -1,9 +1,42 @@
 module rng (
-    //input generate[1],
+    input clk,
+    input rst,
+    input gen,
     output out[3][8]
   ) {
+  .clk(clk){
+    .rst(rst) {pn_gen rng_gen;}
+    edge_detector gen_edge;
+  }
 
   always {
-    out = c{{8b11100000},{8b10000000},{8b11000000}};
+    rng_gen.seed = 32h2f8ace58;
+    gen_edge.in = gen;
+    rng_gen.next = gen_edge.out;
+    //out = c{{8b11100000},{8b10000000},{8b11000000}};
+    out[0][4:0] = 5b0;
+    out[1][4:0] = 5b0;
+    out[2][4:0] = 5b0;
+    case(rng_gen.num[1:0]){
+        2b00: out[0][7:5] = 3b000;
+        2b01: out[0][7:5] = 3b100;
+        2b10: out[0][7:5] = 3b110;
+        2b11: out[0][7:5] = 3b111;
+        default: out[0][7:5] = 0;
+    }
+    case(rng_gen.num[3:2]){
+        2b00: out[1][7:5] = 3b000;
+        2b01: out[1][7:5] = 3b100;
+        2b10: out[1][7:5] = 3b110;
+        2b11: out[1][7:5] = 3b111;
+        default: out[1][7:5] = 0;
+    }
+    case(rng_gen.num[5:4]){
+        2b00: out[2][7:5] = 3b100;
+        2b01: out[2][7:5] = 3b100;
+        2b10: out[2][7:5] = 3b110;
+        2b11: out[2][7:5] = 3b111;
+        default: out[2][7:5] = 0;
+    }
   }
 }
