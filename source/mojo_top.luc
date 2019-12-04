@@ -28,8 +28,6 @@ module mojo_top (
     sig rst;    // reset signal
     alu myALU;
     reg_file myReg;
-    // led_matrix and init_blk are hardcoded, 
-    // need to change if these constants change
 
     .clk(clk) {
         control myCtl;
@@ -41,7 +39,7 @@ module mojo_top (
 
         .rst(rst){
         led_memory myLED;
-        led_memory levelLED;
+        level_memory levelLED;
         }
         dff level[4];
     }
@@ -95,16 +93,14 @@ module mojo_top (
         myLED.colour1 = myCtl.colour1;
         
         // init levelLED
-        levelLED.wdsel = 1;
-        levelLED.wa = 0;
-        if(myCtl.level_reset) level.d = 0;
-        levelLED.wd = level.q;
-        levelLED.reset = myCtl.level_reset;
+        levelLED.display = myCtl.level_display;
+        if(myCtl.level_reset == 1) level.d = 0;
+        levelLED.level = level.q;
         levelLED.colour0 = Colour.YELLOW;
-        levelLED.colour1 = Colour.YELLOW;
+        levelLED.colour1 = Colour.GREEN;
     
         // output pins
-        led_data[3] = levelLED.led_out[0];
+        led_data[3] = levelLED.led_out;
         led_data[2:0] = myLED.led_out[2:0];
         led_data[6:4] = myLED.led_out[5:3];
     

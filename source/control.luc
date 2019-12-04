@@ -5,6 +5,7 @@ module control (
     input z,
     input level[4],
     input game_reset,
+    output level_display,
     output reg_wa[5],
     output led_wa[3],
     output wdsel[2],
@@ -45,9 +46,7 @@ module control (
   rng myRNG;
   always {
     timer.rst = 0;
-    myRNG.clk = clk;
-    myRNG.rst = 0;
-    myRNG.gen = 0;
+    myRNG.level = level;
     reg_wa = d31;
     led_wa = 3;
     wdsel = 2b0;      // wdsel[0] refers to LED memory; wdsel[1] refers to reg_file
@@ -63,6 +62,8 @@ module control (
     colour0 = Colour.BLUE;
     colour1 = Colour.RED;
     myScreen.screen = 8b11111111;
+    level_display = 1;
+
     
     
     /* RUN DOWN of arrangement: 
@@ -77,11 +78,11 @@ module control (
       state.START_GAME:
         player_ingame.d = 2b11;
         level_reset = 1;
-        level_up = 1;
         reset = 1;
         countdown.d = 3;
         timer.rst = 1;
-        if(start_button == 1) state.d = state.RNG;
+        level_display = 0;
+        if(start_button == 1) state.d = state.LEVEL_UP;
         
       state.LEVEL_UP:
         level_up = 1;
@@ -100,20 +101,21 @@ module control (
           col_repeat.d = col_repeat.q + 1;
         } else {
         col_repeat.d = 0;
+        if(timer.value >= 8b11){
         if(countdown.q == 1) {
-          countdown.d = 3;
+          countdown.d = 4;
           state.d = state.RNG;
-        } else { if(timer.value >= 8b111){
+        } else { 
           timer.rst = 1;
           countdown.d = countdown.q - 1;
           }
         }}
     
       state.RNG:          // can consider for the extremely hard difficulty to switch the rng values in another reg; coded to be "reg_wa = 3 + hard;" hard = 0 or 10
-        myRNG.gen = 1;
         reg_wa = col_repeat.q * 3;
         led_wa = col_repeat.q;
         wdsel[1] = 1;
+        test = countdown.q;
         if(col_repeat.q <= 2) wdsel[0] = 1 & player_ingame.q[0];    // for any state that writes to led_memory will have this so that we don't display anything for players who alr lost
         else wdsel[0] = 1 & player_ingame.q[1];
         alufn = BOOL_B;
@@ -129,8 +131,8 @@ module control (
         }
         
       state.USERIN_DISPLAY:
-        myRNG.gen = 0;
-        if(timer.value >= (TIME_GIVEN - level*3)) {          // increasing difficulty
+      test = level;
+        if(timer.value >= (TIME_GIVEN * (1/level) + 5)) {          // increasing difficulty
           col_repeat.d = 0;
           state.d = state.ANIMATE_SHL;    
         } else if(start_button == 1) {
@@ -138,7 +140,7 @@ module control (
           state.d = state.ANIMATE_SHL;
         }
         else {
-        if((timer.value >= (TIME_GIVEN - level*3 - 10)) & (timer.value[0] == 0)) {    // starts blinking once there's 10 units of time left
+        if((timer.value >= (TIME_GIVEN * (1/level) + 5 - 3) & (timer.value[0] == 0))) {    // starts blinking once there's 10 units of time left
           colour0 = Colour.BLACK;
           colour1 = Colour.BLACK;
         }
@@ -152,6 +154,9 @@ module control (
         //bsel = 
         ra_address = col_repeat.q * 3;          // rng
         rb_address = col_repeat.q * 3 + 1;      // user input
+        if(col_repeat.q < 5) {
+          col_repeat.d = col_repeat.q + 1;
+        } else {
         if(user_button[0] == 1) {
             col_repeat.d = 0;
             button_pressed.d = 0;
@@ -182,7 +187,7 @@ module control (
             button_pressed.d = 5;
             state.d = state.USERIN_SHL;
           }
-        }
+        }}
 
       state.USERIN_SHL:
         reg_wa = button_pressed.q * 3 + 1;          // user input
@@ -269,7 +274,7 @@ module control (
             if(col_repeat.q <= 2) player_ingame.d[0] = 0;
             if(col_repeat.q > 2) player_ingame.d[1] = 0;
           }
-        } else{
+        } else {
           col_repeat.d = 0;
           timer.rst = 1;
           state.d = state.ANIMATE_DISPLAY;
@@ -325,38 +330,47 @@ module control (
       state.LEVEL_CLEARED:
         repeat.d = repeat.q + 1;
         
-        if(player_ingame.q == 2b11) {
+        if(player_ingame.q == 2b11) {                                              // if nobody loses, continue with game
           if(repeat.q[0] == 0) {
             led_wa = col_repeat.q;
             wdsel = 2b01;
             alufn = BOOL_B;
-            if(col_repeat.q <= 2) bdata = 8b11100000 & 8x{player_ingame.q[0]};
-            else bdata = 8b11100000 & 8x{player_ingame.q[1]};
+            myScreen.screen = 8b100;
+            if(col_repeat.q <= 2) bdata = myScreen.out[col_repeat.q] & 8x{player_ingame.q[0]};
+            else bdata = myScreen.out[col_repeat.q] & 8x{player_ingame.q[1]};
             bsel = 1;
             colour0 = Colour.GREEN & 24x{player_ingame.q[0]};
             colour1 = Colour.GREEN & 24x{player_ingame.q[1]};
           } 
           if(timer.value >= 8b1000) state.d = state.CLEAR;
-        } else {
+        } else {                                                                   // if someone loses
+          level_display = 0;
           level_reset = 1;
           led_wa = col_repeat.q;
           wdsel = 2b01;
           alufn = BOOL_B;
+          
           case(player_ingame.q){
             2b00: 
               myScreen.screen = 8b110;
               colour0 = Colour.YELLOW;
               colour1 = Colour.YELLOW;
+              if(col_repeat.q <= 2) bdata = myScreen.out[col_repeat.q];// & 8x{player_ingame.q[0]};
+              else bdata = myScreen.out[col_repeat.q];// & 8x{player_ingame.q[1]};
             2b01: 
-              myScreen.screen = 8b1;
+              myScreen.screen = 8b111;
               colour0 = Colour.GREEN;
-              colour1 = Colour.GREEN;
+              colour1 = Colour.RED;
+              if(col_repeat.q <= 2) bdata = myScreen.out[col_repeat.q];// & 8x{player_ingame.q[0]};
+              else bdata = myScreen.out[col_repeat.q];// & 8x{player_ingame.q[1]};
             2b10: 
-              myScreen.screen = 8b10;
-              colour0 = Colour.GREEN;
+              myScreen.screen = 8b111;
+              colour0 = Colour.RED;
               colour1 = Colour.GREEN;
+              if(col_repeat.q <= 2) bdata = myScreen.out[col_repeat.q+3];// & 8x{player_ingame.q[0]};
+              else bdata = myScreen.out[col_repeat.q-3];// & 8x{player_ingame.q[1]};
           }
-          bdata = myScreen.out[col_repeat.q];
+          
           bsel = 1;
           if(col_repeat.q < 5) {                                      // for any state that goes through all cols, this repeats the code till all cols have been passed through
             col_repeat.d = col_repeat.q + 1;
@@ -371,8 +385,12 @@ module control (
 
       state.CLEAR:            // clean reg_file and led_memory
         reset = 1;
+        col_repeat.d = 0;
         if(game_reset == 1) state.d = state.START_GAME;
-        else state.d = state.LEVEL_UP;
+        else {
+          countdown.d = 4;
+          state.d = state.LEVEL_UP;
+        }
         
       default: 
         reg_wa = 00;

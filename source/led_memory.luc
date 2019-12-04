@@ -18,19 +18,33 @@ module led_memory #(
     dff out_matrix[COLS][8 * 24](.rst(rst));
   }
   var i;
-  sig active_colour[24];
+  //sig active_colour[24];
   always {
     if(wdsel == 1) matrix.d[wa] = wd;
     if(reset == 1) {
     matrix.d = 6x{{8b0}};
     }
-    active_colour = colour0;
-    for(i=0;i<COLS;i++){
-      if(i==3) active_colour = colour1;
+    for(i=0;i<3;i++){
         out_matrix.d[i] = c{24x{matrix.q[i][0]}, 24x{matrix.q[i][1]}, 
                             24x{matrix.q[i][2]}, 24x{matrix.q[i][3]}, 24x{matrix.q[i][4]}, 
-                            24x{matrix.q[i][5]}, 24x{matrix.q[i][6]}, 24x{matrix.q[i][7]}} & 8x{active_colour};
+                            24x{matrix.q[i][5]}, 24x{matrix.q[i][6]}, 24x{matrix.q[i][7]}} & 8x{colour0};
     }
+    
+    out_matrix.d[3] = c{24x{matrix.q[5][7]}, 24x{matrix.q[5][6]}, 
+                            24x{matrix.q[5][5]}, 24x{matrix.q[5][4]}, 24x{matrix.q[5][3]}, 
+                            24x{matrix.q[5][2]}, 24x{matrix.q[5][1]}, 24x{matrix.q[5][0]}} & 8x{colour1};
+    out_matrix.d[4] = c{24x{matrix.q[4][7]}, 24x{matrix.q[4][6]}, 
+                            24x{matrix.q[4][5]}, 24x{matrix.q[4][4]}, 24x{matrix.q[4][3]}, 
+                            24x{matrix.q[4][2]}, 24x{matrix.q[4][1]}, 24x{matrix.q[4][0]}} & 8x{colour1};
+    out_matrix.d[5] = c{24x{matrix.q[3][7]}, 24x{matrix.q[3][6]}, 
+                            24x{matrix.q[3][5]}, 24x{matrix.q[3][4]}, 24x{matrix.q[3][3]}, 
+                            24x{matrix.q[3][2]}, 24x{matrix.q[3][1]}, 24x{matrix.q[3][0]}} & 8x{colour1};
+    
+    /*for(i=3;i<6;i++){
+        out_matrix.d[i] = c{24x{matrix.q[i][7]}, 24x{matrix.q[i][6]}, 
+                            24x{matrix.q[i][5]}, 24x{matrix.q[i][4]}, 24x{matrix.q[i][3]}, 
+                            24x{matrix.q[i][2]}, 24x{matrix.q[i][1]}, 24x{matrix.q[i][0]}} & 8x{colour1};
+    }*/
     led.colors = out_matrix.q;
     led_out = led.data_out;
     

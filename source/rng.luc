@@ -1,42 +1,21 @@
 module rng (
-    input clk,
-    input rst,
-    input gen,
+    input level[8],
     output out[3][8]
   ) {
-  .clk(clk){
-    .rst(rst) {pn_gen rng_gen;}
-    edge_detector gen_edge;
-  }
 
   always {
-    rng_gen.seed = 32h2f8ace58;
-    gen_edge.in = gen;
-    rng_gen.next = gen_edge.out;
+    out = 3x{{8b0}};
     //out = c{{8b11100000},{8b10000000},{8b11000000}};
-    out[0][4:0] = 5b0;
-    out[1][4:0] = 5b0;
-    out[2][4:0] = 5b0;
-    case(rng_gen.num[1:0]){
-        2b00: out[0][7:5] = 3b000;
-        2b01: out[0][7:5] = 3b100;
-        2b10: out[0][7:5] = 3b110;
-        2b11: out[0][7:5] = 3b111;
-        default: out[0][7:5] = 0;
-    }
-    case(rng_gen.num[3:2]){
-        2b00: out[1][7:5] = 3b000;
-        2b01: out[1][7:5] = 3b100;
-        2b10: out[1][7:5] = 3b110;
-        2b11: out[1][7:5] = 3b111;
-        default: out[1][7:5] = 0;
-    }
-    case(rng_gen.num[5:4]){
-        2b00: out[2][7:5] = 3b100;
-        2b01: out[2][7:5] = 3b100;
-        2b10: out[2][7:5] = 3b110;
-        2b11: out[2][7:5] = 3b111;
-        default: out[2][7:5] = 0;
+    case(level){
+    8b1: out = c{{8b11100000},{8b10000000},{8b0}};
+    8b10: out = c{{8b10000000},{8b11000000},{8b11000000}};
+    8b100: out = c{{8b00000000},{8b11100000},{8b10000000}};
+    8b1000: out = c{{8b11000000},{8b00000000},{8b11000000}};
+    8b10000: out = c{{8b00000000},{8b00000000},{8b11000000}};
+    8b100000: out = c{{8b11000000},{8b10000000},{8b10000000}};
+    8b1000000: out = c{{8b11100000},{8b10000000},{8b11000000}};
+    8b10000000: out = c{{8b00000000},{8b10000000},{8b00000000}};
+    default: out = c{{8b11000000},{8b00000000},{8b11000000}};
     }
   }
 }
