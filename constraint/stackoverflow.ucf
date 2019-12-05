@@ -12,4 +12,4 @@ NET "user_button<2>" LOC = P30 | IOSTANDARD = LVTTL;
 NET "user_button<3>" LOC = P14 | IOSTANDARD = LVTTL;
 NET "user_button<4>" LOC = P11 | IOSTANDARD = LVTTL;
 NET "user_button<5>" LOC = P9 | IOSTANDARD = LVTTL;
-NET "start_button<0>" LOC = P24 | IOSTANDARD = LVTTL;
+NET "start_button<0>" LOC = P58 | IOSTANDARD = LVTTL;

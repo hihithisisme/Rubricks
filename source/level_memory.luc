@@ -2,33 +2,44 @@ module level_memory (
     input clk,  // clock
     input rst,
     input display,
-    input colour0[24],
-    input colour1[24],        
+        
     input level[4],
     output led_out
   ) {
   .clk(clk) {
     led_ws2812b led(#SIZE(8));
     dff out_matrix[8 * 24](.rst(rst));
+    dff colour0[24];
+    dff colour1[24];
   }
+  sig level_modified[4];
 
   always {
-    if(0 != level) out_matrix.d[23:0] =  colour0;
-    else out_matrix.d[23:0] = colour1;
-    if(1 != level) out_matrix.d[47:24] =  colour0;
-    else out_matrix.d[47:24] = colour1;
-    if(2 != level) out_matrix.d[71:48] =  colour0;
-    else out_matrix.d[71:48] = colour1;
-    if(3 != level) out_matrix.d[95:72] =  colour0;
-    else out_matrix.d[95:72] = colour1;
-    if(4 != level) out_matrix.d[119:96] =  colour0;
-    else out_matrix.d[119:96] = colour1;
-    if(5 != level) out_matrix.d[143:120] =  colour0;
-    else out_matrix.d[143:120] = colour1;
-    if(6 != level) out_matrix.d[167:144] =  colour0;
-    else out_matrix.d[167:144] = colour1;
-    if(7 != level) out_matrix.d[191:168] =  colour0;
-    else out_matrix.d[191:168] = colour1;
+    if(level <= 8) {
+      level_modified = level;
+      colour0.d = Colour.PURPLE;
+      colour1.d = Colour.YELLOW;
+    } else {
+      level_modified = level - 8;
+      colour0.d = Colour.YELLOW;
+      colour1.d = Colour.WHITE;
+    }
+    if(1 != level_modified) out_matrix.d[23:0] =  colour0.q;
+    else out_matrix.d[23:0] = colour1.q;
+    if(2 != level_modified) out_matrix.d[47:24] =  colour0.q;
+    else out_matrix.d[47:24] = colour1.q;
+    if(3 != level_modified) out_matrix.d[71:48] =  colour0.q;
+    else out_matrix.d[71:48] = colour1.q;
+    if(4 != level_modified) out_matrix.d[95:72] =  colour0.q;
+    else out_matrix.d[95:72] = colour1.q;
+    if(5 != level_modified) out_matrix.d[119:96] =  colour0.q;
+    else out_matrix.d[119:96] = colour1.q;
+    if(6 != level_modified) out_matrix.d[143:120] =  colour0.q;
+    else out_matrix.d[143:120] = colour1.q;
+    if(7 != level_modified) out_matrix.d[167:144] =  colour0.q;
+    else out_matrix.d[167:144] = colour1.q;
+    if(8 != level_modified) out_matrix.d[191:168] =  colour0.q;
+    else out_matrix.d[191:168] = colour1.q;
     led.colors = out_matrix.q;
     if(display == 1) led_out = led.data_out;
     else led_out = 0;

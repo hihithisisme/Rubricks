@@ -3,7 +3,9 @@ global Colour {
     const RED = h00DD00;
     const GREEN = h0000DD;
     const BLUE = hDD0000;
-    const YELLOW = h008888;
+    const YELLOW = h00DDDD;
+    const CYAN = hAD6A0D;
+    const PURPLE = h6A0DAD;
     const WHITE = h888888;
     const BLACK = h000000;
 }
@@ -59,7 +61,7 @@ module mojo_top (
         user_edge.in = user_cond.out;
         user_cond.in = user_button;    
         start_edge.in = start_cond.out;
-        start_cond.in = io_button[1];      // TOCHANGE
+        start_cond.in = start_button;
     
         // init myALU
         myALU.alufn = myCtl.alufn;
@@ -96,15 +98,14 @@ module mojo_top (
         levelLED.display = myCtl.level_display;
         if(myCtl.level_reset == 1) level.d = 0;
         levelLED.level = level.q;
-        levelLED.colour0 = Colour.YELLOW;
-        levelLED.colour1 = Colour.GREEN;
     
         // output pins
         led_data[3] = levelLED.led_out;
         led_data[2:0] = myLED.led_out[2:0];
         led_data[6:4] = myLED.led_out[5:3];
     
-        io_led[0] = myCtl.test;
+        io_led[0] = myCtl.level_display;
+        io_led[1] = myCtl.test;
         io_led[2] = io_button;
     /*    
         io_led[0] = myALU.out;
