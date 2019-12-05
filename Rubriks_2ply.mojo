@@ -2,8 +2,8 @@
 <project name="Rubriks_2ply" board="Mojo V3" language="Lucid">
   <files>
     <src>alu.luc</src>
-    <src>level_memory.luc</src>
     <src>hardcode_screen.luc</src>
+    <src>level_memory.luc</src>
     <src>control.luc</src>
     <src>reg_file.luc</src>
     <src top="true">mojo_top.luc</src>
@@ -17,8 +17,8 @@
     <ucf>stackoverflow.ucf</ucf>
     <ucf>io_shield.ucf</ucf>
     <ucf lib="true">mojo.ucf</ucf>
-    <component>decoder.luc</component>
     <component>pn_gen.luc</component>
+    <component>decoder.luc</component>
     <component>reset_conditioner.luc</component>
     <component>pipeline.luc</component>
     <component>button_conditioner.luc</component>

@@ -26,7 +26,7 @@ module control (
   const SHL = 6b100000;
   const ADD = 6b000000;
   const SUB = 6b000001;
-  const TIME_GIVEN = 40;
+  const TIME_GIVEN = 30;
   .clk(clk) {
     fsm state = {START_GAME,LEVEL_UP,RNG,
                 USERIN_SHL,USERIN_ADD,USERIN_DISPLAY,
@@ -39,6 +39,7 @@ module control (
     dff col_repeat[3];
     dff repeat[3];
     dff countdown[3];
+    dff time_limit[5];
 
     counter timer (#SIZE(8), #DIV(24), #TOP(255));            // keeps track of the time available 
   }
@@ -132,7 +133,14 @@ module control (
         
       state.USERIN_DISPLAY:
       test = level;
-        if(timer.value >= (TIME_GIVEN * (1/level) + 5)) {          // increasing difficulty
+      
+       if(TIME_GIVEN - (4*level)<=8){
+        time_limit.d=4;
+        }
+        else{
+        time_limit.d = TIME_GIVEN - (4*level);
+        }
+        if(timer.value >= time_limit.q) {          // increasing difficulty
           col_repeat.d = 0;
           state.d = state.ANIMATE_SHL;    
         } else if(start_button == 1) {
@@ -140,7 +148,7 @@ module control (
           state.d = state.ANIMATE_SHL;
         }
         else {
-        if((timer.value >= (TIME_GIVEN * (1/level) + 5 - 3) & (timer.value[0] == 0))) {    // starts blinking once there's 10 units of time left
+        if((timer.value >= (time_limit.q- 3) & (timer.value[0] == 0))) {    // starts blinking once there's 10 units of time left
           colour0 = Colour.BLACK;
           colour1 = Colour.BLACK;
         }
@@ -247,7 +255,7 @@ module control (
         wdsel = 2b10;
         alufn = BOOL_AND;
         //bdata = 
-        //bsel = 
+        //bsel
         ra_address = col_repeat.q * 3;               // rng
         rb_address = col_repeat.q * 3 + 1;           // user input
         if(col_repeat.q < 5) {
@@ -266,14 +274,12 @@ module control (
         bsel = 1;
         ra_address = col_repeat.q + 18;              // collision check
         //rb_address = 1;
+        if(z != 1) {                                  // CHANGED 0412
+          if(col_repeat.q <= 2) player_ingame.d[0] = 0;
+          if(col_repeat.q > 2) player_ingame.d[1] = 0;
+        }
         if(col_repeat.q < 5) {
           col_repeat.d = col_repeat.q + 1;
-          if(z == 1) {
-            state.d = state.COLLIDE_CHECK;
-          } else {
-            if(col_repeat.q <= 2) player_ingame.d[0] = 0;
-            if(col_repeat.q > 2) player_ingame.d[1] = 0;
-          }
         } else {
           col_repeat.d = 0;
           timer.rst = 1;
@@ -314,13 +320,14 @@ module control (
         bsel = 1;
         ra_address = col_repeat.q * 3 + 2;        // store
         //rb_address = 
+        if(z != 1) {                                      // CHANGED 0412
+            if(col_repeat.q <= 2) player_ingame.d[0] = 0;
+            if(col_repeat.q > 2) player_ingame.d[1] = 0;
+        }
         
         if(col_repeat.q < 5) {
           col_repeat.d = col_repeat.q + 1;
-          if(z != 1) {
-            if(col_repeat.q <= 2) player_ingame.d[0] = 0;
-            if(col_repeat.q > 2) player_ingame.d[1] = 0;
-          }
+          
         } else {
           col_repeat.d = 0;
           timer.rst = 1;
